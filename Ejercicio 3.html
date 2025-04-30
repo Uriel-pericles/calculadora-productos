@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2840/2840249.png" type="image/png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>menos costos | Calculadora de Precio de Venta</title>
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css"/>
+  <!-- Fuente formal: Merriweather -->
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      font-family: 'Merriweather', serif;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+    .card {
+      border-radius: 1rem;
+      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+      background-color: #ffffffcc;
+      padding: 2rem;
+    }
+    .emoji {
+      font-size: 2rem;
+    }
+    .btn-primary {
+      background-color: #ff7e5f;
+      border-color: #ff7e5f;
+    }
+    .btn-primary:hover {
+      background-color: #feb47b;
+      border-color: #feb47b;
+    }
+    label.form-label {
+      font-weight: 600;
+    }
+    input.form-control, textarea.form-control {
+      font-size: 1.05rem;
+    }
+    h2, h4, h5 {
+      font-weight: 700;
+    }
+    .logo {
+      max-width: 80px;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-6">
+        <div class="card animate__animated animate__fadeIn text-center">
+          <img src="https://cdn-icons-png.flaticon.com/512/2840/2840249.png" alt="Logotipo Finanzas" class="logo mx-auto d-block animate__animated animate__fadeInDown"/>
+          <h3 class="mt-2 fw-bold">menos costos</h3>
+          <h2 class="mb-4">🛍️ Calculadora de Precio de Venta</h2>
+          <div class="mb-3 text-start">
+            <label for="descripcionProducto" class="form-label">Descripción del Producto 📝</label>
+            <textarea class="form-control" id="descripcionProducto" placeholder="Ej: Camiseta de algodón premium" rows="2"></textarea>
+          </div>
+          <div class="mb-3 text-start">
+            <label for="costoBase" class="form-label">Costo Base ($)</label>
+            <input type="number" class="form-control" id="costoBase" placeholder="Ej: 100">
+          </div>
+          <div class="mb-3 text-start">
+            <label for="porcentajeGanancia" class="form-label">Porcentaje de Ganancia (%)</label>
+            <input type="number" class="form-control" id="porcentajeGanancia" placeholder="Ej: 30">
+          </div>
+          <div class="mb-3 text-start">
+            <label for="porcentajeDescuento" class="form-label">Descuento Promocional (%) 🏷️</label>
+            <input type="number" class="form-control" id="porcentajeDescuento" placeholder="Ej: 10">
+          </div>
+          <button class="btn btn-primary w-100" onclick="calcularPrecio()">Calcular 💰</button>
+          <div id="resultado" class="mt-4 text-center d-none animate__animated animate__fadeInUp">
+            <h4 class="mb-2">💵 Precio de Venta Sugerido (sin descuento):</h4>
+            <p id="precioVenta" class="fs-3 fw-bold text-success"></p>
+            <h5 class="mt-3">💸 Precio Final con Descuento:</h5>
+            <p id="precioConDescuento" class="fs-4 fw-bold text-primary"></p>
+            <p class="text-muted">Ganancia y promoción aplicadas ✅</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mt-5">
+      <h4 class="text-center mb-3">📊 Historial de Cálculos</h4>
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+          <thead class="table-light">
+            <tr>
+              <th>Descripción</th>
+              <th>Costo Base ($)</th>
+              <th>% Ganancia</th>
+              <th>% Descuento</th>
+              <th>Precio Sugerido ($)</th>
+              <th>Precio Final ($)</th>
+            </tr>
+          </thead>
+          <tbody id="historialTabla">
+            <!-- Registros aparecerán aquí -->
+          </tbody>
+        </table>
+        <div class="text-end mt-2">
+          <input type="file" id="archivoExcel" accept=".xlsx,.xls" class="form-control form-control-sm d-inline-block w-auto me-2" onchange="importarExcel()" />
+          <button class="btn btn-sm btn-success" onclick="exportarExcel()">📁 Exportar a Excel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function calcularPrecio() {
+      const descripcion = document.getElementById('descripcionProducto').value.trim();
+      const costo = parseFloat(document.getElementById('costoBase').value);
+      const ganancia = parseFloat(document.getElementById('porcentajeGanancia').value);
+      const descuento = parseFloat(document.getElementById('porcentajeDescuento').value) || 0;
+      const resultadoDiv = document.getElementById('resultado');
+      const precioVenta = document.getElementById('precioVenta');
+      const precioConDescuento = document.getElementById('precioConDescuento');
+      const tabla = document.getElementById('historialTabla');
+
+      if (!descripcion || isNaN(costo) || isNaN(ganancia) || costo <= 0 || ganancia < 0 || descuento < 0) {
+        alert('Por favor, completa todos los campos correctamente.');
+        resultadoDiv.classList.add('d-none');
+        return;
+      }
+
+      const precioSugerido = costo * (1 + ganancia / 100);
+      const precioFinal = precioSugerido * (1 - descuento / 100);
+
+      precioVenta.textContent = `$${precioSugerido.toFixed(2)}`;
+      precioConDescuento.textContent = `$${precioFinal.toFixed(2)}`;
+      resultadoDiv.classList.remove('d-none');
+
+      const fila = document.createElement('tr');
+      fila.innerHTML = `
+        <td>${descripcion}</td>
+        <td>$${costo.toFixed(2)}</td>
+        <td>${ganancia}%</td>
+        <td>${descuento}%</td>
+        <td>$${precioSugerido.toFixed(2)}</td>
+        <td>$${precioFinal.toFixed(2)}</td>
+      `;
+      tabla.appendChild(fila);
+    }
+
+    function limpiarHistorial() {
+      if (confirm('¿Estás seguro de que deseas borrar todo el historial?')) {
+        const tabla = document.getElementById('historialTabla');
+        tabla.innerHTML = '';
+      }
+    }
+  </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+  function exportarExcel() {
+    const tabla = document.getElementById('historialTabla');
+    const filas = tabla.querySelectorAll('tr');
+    const datos = [['Descripción', 'Costo Base ($)', '% Ganancia', '% Descuento', 'Precio Sugerido ($)', 'Precio Final ($)']];
+
+    filas.forEach(fila => {
+      const celdas = fila.querySelectorAll('td');
+      const filaDatos = [];
+      celdas.forEach(celda => filaDatos.push(celda.textContent));
+      datos.push(filaDatos);
+    });
+
+    const hoja = XLSX.utils.aoa_to_sheet(datos);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Historial');
+    XLSX.writeFile(libro, 'historial_calculos.xlsx');
+  }
+
+  function importarExcel() {
+    const input = document.getElementById('archivoExcel');
+    const archivo = input.files[0];
+    if (!archivo) return;
+
+    const lector = new FileReader();
+    lector.onload = function (e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const hoja = workbook.Sheets[workbook.SheetNames[0]];
+      const filas = XLSX.utils.sheet_to_json(hoja, { header: 1 });
+
+      const tabla = document.getElementById('historialTabla');
+      tabla.innerHTML = '';
+
+      filas.slice(1).forEach(fila => {
+        if (fila.length >= 6) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${fila[0]}</td>
+            <td>${fila[1]}</td>
+            <td>${fila[2]}</td>
+            <td>${fila[3]}</td>
+            <td>${fila[4]}</td>
+            <td>${fila[5]}</td>
+          `;
+          tabla.appendChild(tr);
+        }
+      });
+    };
+    lector.readAsArrayBuffer(archivo);
+  }
+</script>
+</body>
+</html>
